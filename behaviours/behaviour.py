@@ -1,5 +1,5 @@
 
-# Implements a Neural Network for defining button behaviours ala BBRL. Thi script also implements train and test functions.
+# Implements a Neural Network for defining button behaviours ala BBRL. This script also implements train and test functions.
 # This is a helper file and should be run from another script, i.e. mario_bx.py
 # Authors: Gerardo Aragon-Camarasa, 2020
 
