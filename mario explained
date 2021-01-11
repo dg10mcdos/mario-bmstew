@@ -1,0 +1,78 @@
+repo structure
+
+i am to make training better
+
+main file main_bx.py 	- relevant for me
+			- script to train behaviours
+			- sets up feature extration & trains behaviours
+			- uses a json experiment file
+
+feature_extraction.py	- defines feature extraction network
+behaviour.py		- run from another file
+
+./plots - saves all training for behaviours
+./results - saves feature extraction results
+
+create folders for every experiment
+
+save plots
+save in scripts statistics or what happens inside network as pickle files
+save python file that has been edited. e.g. behaviour.py etc
+experiment json file
+csv file for dataset
+save model weights
+
+tas mario bros - tool-assisted-speedrun find hacks for games to speedrun
+
+./fceux/movies - these files are tas speedruns. i.e. the "experts" playing the game
+
+each line in the file is a frame/state, every dot is a button. they show when pressed
+
+./fceux/lua_scripts - scripts that generate data in readme
+
+./data/run_name/images - each image of a run, can generate like a million images
+	       /states - saves json file containing buttons being pressed, position on screen, mario state e.g. coins, level, lives etc. the "state":Number corresponds to each state in mario-bros ram map
+
+ram mario bros - https://datacrystal.romhacking.net/wiki/Super_Mario_Bros.:RAM_map
+
+for each run image, a corresponding state is produced
+
+mariodataloader.py goes into ./data/runs/images & states, then loads this data in a way that can be parsed into a neural network 
+
+
+
+pytorch allows you to create your own dataloader. mariodataloader is default. in datasetmario you can split the data for train and validate and do a bunch of other stuff
+
+./behaviours/gencsv_fe.py - generates csv file for feathre extration. puts in ./data. provides each line corresponding to each state and each image for each state
+
+./behaviours/gencsv_behaviour.py - generates csv for main-bx file, containing all info and puts in bx_data folder. file structure is noframe appendage, sequential frame number, world, level image, state, button being pressed in this state
+
+python ./baselines/PPO/train.py - shows training of mario in window
+
+interfaces with gym retro, 8 processes (8 marios) takes experience for all 8 then shows a test case
+
+./PPO/train.py - 
+		@author: Viet Nguyen <nhviet1009@gmail.com>
+		From: https://github.com/uvipen/Super-mario-bros-PPO-pytorch
+
+		- We can pass in different hyperparameters 
+		- gym retro main interface = MultipleEnvironments(opt.world, opt.stage, opt.action_type, opt.num_processes)
+		- go through a traceback of ppo train and investigate code
+run train.py in debug mode so you can see what is going on
+
+actions are what the agent DOES (high level decision - deciding to touch a pan)
+behaviour is "reactive", no decision making, input reactive behaviour -> output action (hardcoded actions, e.g. if the stove is hot, we instinctively remove our hand from it)
+
+when ppo train runs off level one, it crashes on level 2 as knowledge from previous level is irrelevant/forgotten
+
+meeting dates:
+30/09 (non group) - mines different
+13/10 (1st group)
+20/10
+27/10
+10/11
+17/11
+01/12
+
+
+
