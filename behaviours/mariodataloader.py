@@ -89,8 +89,12 @@ class DatasetMario(Dataset):
 
         return sample
 
-
 class DatasetMarioBx(Dataset):
+
+    # In this class, with a dataset (image-state pairs)
+    # for each frame, we load in the image for that frame and convert it into a readable format for pytorch
+    # we load in the controller data (buttons pressed) and convert it into a readable format i.e. not true/false for each button but instead numbers 
+
     def __init__(self, file_path, csv_name, buttontrain, transform_in=None):
         self.data = pd.read_csv(file_path+"/"+csv_name)
         self._path = file_path+"/"
@@ -104,7 +108,7 @@ class DatasetMarioBx(Dataset):
 
     def __getitem__(self, index):
         # Load state and image from Mario FCEUX (after a dataset has been created with the Lua script and FM2)
-        image_file = self._path + self.data.iloc[index, 0]#.values.astype(np.uint8).reshape((1, 28, 28))
+        image_file = self._path + self.data.iloc[index, 0] #.values.astype(np.uint8).reshape((1, 28, 28))
         state_fn = self._path + self.data.iloc[index, 1]
         label_button = self.data.iloc[index, 2]
 
@@ -133,6 +137,10 @@ class DatasetMarioBx(Dataset):
 
 class DatasetMarioBxv2(Dataset):
     # Here the loader will return i and i+1, i+2, ..., n
+    # In this class, with a dataset (image-state pairs)
+    # for each frame, we load in the image for that frame and convert it into a readable format for pytorch
+    # we load in the controller data (buttons pressed) and convert it into a readable format i.e. not true/false for each button but instead numbers 
+
     def __init__(self, csv_name, buttontrain, transform_in=None):
         self.data = pd.read_csv(csv_name) # pd.read_csv(file_path+"/"+csv_name)
         self._path = "./"+"/"
@@ -148,10 +156,11 @@ class DatasetMarioBxv2(Dataset):
     def __getitem__(self, index):
         images = []
         # Load state and image from Mario FCEUX (after a dataset has been created with the Lua script and FM2)
-        self._noframes = self.data.iloc[index,0]
-        seq = self.data.iloc[index, 1]
-        files = self.data.iloc[index, 4].replace("'","").strip('][').split(', ')
-        for ifiles in files:
+        self._noframes = self.data.iloc[index,0] # e.g for exp3 this is 3
+        seq = self.data.iloc[index, 1]           # sequence number will essentially be frame number e.g. 1,2,3, n end of run. exp3 one starts at 2
+        files = self.data.iloc[index, 4].replace("'","").strip('][').split(', ') # array of image files (column E in bx_data) [img1pth, img2pth, img3pth] <-python list of strings
+
+        for ifiles in files:                    # for each image file in the array, get the image and convert it into RGB + apply the transform to it
             image_file = self._path + ifiles
 
             # Get image
@@ -163,7 +172,8 @@ class DatasetMarioBxv2(Dataset):
 
             images.append(image_data)
 
-        label_button = self.data.iloc[index, 6]  # label is from last image in the list above
+        label_button = self.data.iloc[index, 6]  # label is from last image in the list above 
+        # label_button is rbrbrb for example
         
         # CLASSIFICATION: 1 means press button!
         # if self._button in label_button:
@@ -172,13 +182,14 @@ class DatasetMarioBxv2(Dataset):
         #     control_data = np.asarray([0], dtype=np.int64)
 
         # REGRESSION: Compute prob of pressing button in noFrames
-        if type(label_button) != float:
-            prob_ocurr = label_button.count(self._button) / self._noframes
+        if type(label_button) != float:                                         # presumably an empty column will be represented as 0.0 when we load it
+            prob_ocurr = label_button.count(self._button) / self._noframes      # I think this counts the number of occurences of the button we are training e.g. a, label_button = abab frames = 3, 
+                                                                                # prob_occur = 2/3
             control_data = np.asarray([prob_ocurr], dtype=np.float)
         else: # everything else
             control_data = np.asarray([0.0], dtype=np.float)
 
-        sample = {'seq': seq, 'image': images, 'state': torch.from_numpy(control_data).type(torch.float32)}
+        sample = {'seq': seq, 'image': images, 'state': torch.from_numpy(control_data).type(torch.float32)}   # sample = {frame_sequence_number, images_in_this sequence_converted & transformed for NN, probability of the button being trained being pressed}
         return sample
 
 

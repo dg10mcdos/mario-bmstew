@@ -12,6 +12,7 @@ def create_datasets(dataset, shuffle_dataset, batch_size):
     out_loader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle_dataset, num_workers=4)
     return out_loader
 
+
 def create_datasets_split(dataset, shuffle_dataset, validation_split, batch_training, batch_validation):
     # Creating data indices for training and validation splits:
     train_size = int(validation_split * len(dataset))
