@@ -14,8 +14,8 @@ import cv2
 import numpy as np
 import subprocess as sp
 import torch.multiprocessing as mp
-from src.helpers import JoypadSpace, SIMPLE_MOVEMENT, COMPLEX_MOVEMENT, RIGHT_ONLY, flag_get
-from src.retrowrapper import RetroWrapper
+from BBRL.src.helpers import JoypadSpace, SIMPLE_MOVEMENT, COMPLEX_MOVEMENT, RIGHT_ONLY, flag_get
+from BBRL.src.retrowrapper import RetroWrapper
 
 SCRIPT_DIR = os.getcwd() #os.path.dirname(os.path.abspath(__file__))
 ENV_NAME = 'SMB-JU'

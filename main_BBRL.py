@@ -65,6 +65,7 @@ if __name__ == "__main__":
         b_list[i] = b_list[i].load_state_dict(torch.load('./models/bestmodel_bx_' + "bx" + str(opt["buttons"][i]) + str(opt["no_frames"]) + 'f.pth'))
     print("loaded behaviours successfully!\n")
     print("training...\n")
-    train.train(opt, b_list,motion_list)
+    sys.argv = [sys.argv[0]] # clear exp3 arg
+    train.train(b_list,motion_list)
 
 

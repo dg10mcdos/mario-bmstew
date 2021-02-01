@@ -1,7 +1,6 @@
 import os
 import sys
 
-sys.path.append("~/Documents/repos/mario-bm")
 os.environ['OMP_NUM_THREADS'] = '1'
 
 import argparse
@@ -12,11 +11,11 @@ from torch.distributions import Categorical
 import torch.nn.functional as F
 import numpy as np
 import shutil, csv, time
-# from BBRL.src.helpers import flag_get
-# from BBRL.src.RLNet import RLNet
-# from BBRL.src.env import MultipleEnvironments
-# from BBRL.src.process import evaluate
-
+from BBRL.src.helpers import flag_get
+from BBRL.src.RLNet import RLNet
+from BBRL.src.env import MultipleEnvironments
+from BBRL.src.process import evaluate
+from BBRL.src.model import PPO
 TEST_ON_THE_GO = True
 
 
@@ -53,19 +52,18 @@ def check_flag(info):
     return out
 
 
-def train(opt,b_list,motion_list):  # opt is object storing args
+def train(b_list,motion_list):  # opt is object storing args
+    opt = get_args()
     if torch.cuda.is_available():
         torch.cuda.manual_seed(123)
     else:
         torch.manual_seed(123)
-    print(opt)
     opt.saved_path = os.getcwd() + '/BBRL/' + opt.saved_path
 
     if not os.path.isdir(opt.saved_path):
         os.makedirs(opt.saved_path)
 
     savefile = opt.saved_path + '/BBRL_train.csv'
-    print(savefile)
     title = ['Loops', 'Steps', 'Time', 'AvgLoss', 'MeanReward', "StdReward", "TotalReward", "Flags"]
     with open(savefile, 'w', newline='') as sfile:
         writer = csv.writer(sfile)
@@ -74,8 +72,8 @@ def train(opt,b_list,motion_list):  # opt is object storing args
     # Create environments
     envs = MultipleEnvironments(opt.world, opt.stage, opt.action_type, opt.num_processes)
 
-    # model = BBRL(envs.num_states, envs.num_actions) # 4 states(assuming processes), 7 actions (buttons)
-    model = RLNet(envs.num_states, envs.num_actions)
+    model = PPO(envs.num_states, envs.num_actions) # 4 states(assuming processes), 7 actions (buttons)
+    # model = RLNet(envs.num_states, envs.num_actions)
 
     # Create model and optimizer
     if torch.cuda.is_available():
