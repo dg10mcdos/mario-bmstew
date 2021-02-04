@@ -13,6 +13,8 @@ import torchvision.transforms as transforms
 from torch.autograd import Variable
 from torch.optim.lr_scheduler import StepLR
 
+from BBRL.src.model import PPO
+
 '''
 Define the neural network that has some learnable parameters (or weights)
 Iterate over a dataset of inputs
@@ -28,7 +30,7 @@ typically using a simple update rule: weight = weight - learning_rate * gradient
 
 class RLNet(nn.Module):
     def __init__(self, num_inputs, num_actions):  # num_states, num_actions (e.g. 4 & 7)
-        super(PPO, self).__init__()
+        super(RLNet, self).__init__()
         self.conv1 = nn.Conv2d(num_inputs, 32, 3, stride=2, padding=1)  # input 4 states channels, output channels
         self.conv2 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
         self.conv3 = nn.Conv2d(32, 32, 3, stride=2, padding=1)

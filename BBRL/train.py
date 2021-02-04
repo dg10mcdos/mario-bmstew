@@ -15,7 +15,6 @@ from BBRL.src.helpers import flag_get
 from BBRL.src.RLNet import RLNet
 from BBRL.src.env import MultipleEnvironments
 from BBRL.src.process import evaluate
-from BBRL.src.model import PPO
 TEST_ON_THE_GO = True
 
 
@@ -71,9 +70,9 @@ def train(b_list,motion_list):  # opt is object storing args
 
     # Create environments
     envs = MultipleEnvironments(opt.world, opt.stage, opt.action_type, opt.num_processes)
+    # model = PPO(envs.num_states, envs.num_actions) # 4 states(assuming processes), 7 actions (buttons)
 
-    model = PPO(envs.num_states, envs.num_actions) # 4 states(assuming processes), 7 actions (buttons)
-    # model = RLNet(envs.num_states, envs.num_actions)
+    model = RLNet(envs.num_states, envs.num_actions) # 4 states(assuming processes), 7 actions (buttons)
 
     # Create model and optimizer
     if torch.cuda.is_available():
@@ -121,7 +120,6 @@ def train(b_list,motion_list):  # opt is object storing args
             states.append(curr_states)
 
             logits, value = model(curr_states)  # actor, critic
-
             # actor [4,7] "score" for pressing buttons aka given our state probability of each action
             # critic [4,1] q-value for state
             values.append(value.squeeze())  # critic [4,1] -> 4
