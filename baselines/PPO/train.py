@@ -1,11 +1,9 @@
-
-
 import os
 
 os.environ['OMP_NUM_THREADS'] = '1'
 import argparse
 import torch
-from src.env import MultipleEnvironments
+from src.env import MultipleEnvironments, create_train_env
 from src.model import PPO
 from src.process import evaluate
 import torch.multiprocessing as _mp
@@ -14,8 +12,8 @@ import torch.nn.functional as F
 import numpy as np
 import shutil, csv, time
 from src.helpers import flag_get
-
 TEST_ON_THE_GO = True
+
 
 def get_args():
     parser = argparse.ArgumentParser(
@@ -32,13 +30,16 @@ def get_args():
     parser.add_argument('--num_epochs', type=int, default=10)
     parser.add_argument("--num_local_steps", type=int, default=512)
     parser.add_argument("--num_global_steps", type=int, default=5e6)
-    parser.add_argument("--num_processes", type=int, default=4, help="Number of concurrent processes, has to be larger than 1")
+    parser.add_argument("--num_processes", type=int, default=4,
+                        help="Number of concurrent processes, has to be larger than 1")
     parser.add_argument("--save_interval", type=int, default=50, help="Number of steps between savings")
     parser.add_argument("--max_actions", type=int, default=200, help="Maximum repetition steps in test phase")
     parser.add_argument("--log_path", type=str, default="tensorboard/ppo_super_mario_bros")
     parser.add_argument("--saved_path", type=str, default="trained_models")
     args = parser.parse_args()
     return args
+
+
 '''
 how they were saved in behaviour.py:
 
@@ -50,6 +51,7 @@ model.load_state_dict(torch.load(PATH))
 model.eval()
 '''
 
+
 def check_flag(info):
     out = 0
     for i in info:
@@ -58,15 +60,62 @@ def check_flag(info):
     return out
 
 
+# def train(opt):  # opt is object storing args
+#
+#     SIMPLE_MOVEMENT = [
+#         ['noop'],
+#         ['right'],
+#         ['right', 'A'],
+#         ['right', 'B'],
+#         ['right', 'A', 'B'],
+#         ['A', 'B'],
+#         ['left'],
+#     ]
+#
+#     env = create_train_env(SIMPLE_MOVEMENT, mp_wrapper=False)
+#     env.reset()
+#     i, y, u, j = env.step(3)
+#     while True:
+#         # i, y, u, j = env.step(np.random.randint(0,7))
+#         i, y, u, j = env.step(5)
+#         i, y, u, j = env.step(5)
+#
+#         i, y, u, j = env.step(5)
+#         env.render()
+#         print(i)
+# def train(opt):  # opt is object storing args
+#
+#     SIMPLE_MOVEMENT = [
+#         ['noop'],
+#         ['right'],
+#         ['right', 'A'],
+#         ['right', 'B'],
+#         ['right', 'A', 'B'],
+#         ['A', 'B'],
+#         ['left'],
+#     ]
+#
+#     env = create_train_env(SIMPLE_MOVEMENT, mp_wrapper=False)
+#     env.reset()
+#     i, y, u, j = env.step(3)
+#     while True:
+#         # i, y, u, j = env.step(np.random.randint(0,7))
+#         i, y, u, j = env.step(5)
+#         i, y, u, j = env.step(5)
+#
+#         i, y, u, j = env.step(5)
+#         env.render()
+#         print(i)
+
 def train(opt): # opt is object storing args
     if torch.cuda.is_available():
         torch.cuda.manual_seed(123)
     else:
         torch.manual_seed(123)
-    
+
     opt.saved_path = os.getcwd() + '/baselines/PPO/' + opt.saved_path
 
-    
+
     if not os.path.isdir(opt.saved_path):
         os.makedirs(opt.saved_path)
 
@@ -79,7 +128,6 @@ def train(opt): # opt is object storing args
 
     # Create environments
     envs = MultipleEnvironments(opt.world, opt.stage, opt.action_type, opt.num_processes)
-
     # Create model and optimizer
     model = PPO(envs.num_states, envs.num_actions) # 4 states(assuming processes), 7 actions (buttons)
     if torch.cuda.is_available():
@@ -133,11 +181,16 @@ def train(opt): # opt is object storing args
             policy = F.softmax(logits, dim=1) # turns action scores into probabilities
             old_m = Categorical(policy) # actions with probabilities
             action = old_m.sample() # choose random action wrt probabilities
+
+
+
             actions.append(action) # record action
             old_log_policy = old_m.log_prob(action) # probability of action
             old_log_policies.append(old_log_policy) # record action probability
             # Evaluate predicted action
             result = []
+            print(action.shape)
+            print(action[0].cpu().item())
             # ac = action.cpu().item()
             if torch.cuda.is_available():
                 # [agent_conn.send(("step", act)) for agent_conn, act in zip(envs.agent_conns, action.cpu())]
@@ -171,6 +224,7 @@ def train(opt): # opt is object storing args
         _, next_value, = model(curr_states) # retrieve next q value
         next_value = next_value.squeeze()
         old_log_policies = torch.cat(old_log_policies).detach()
+        print(actions[0][:])
         actions = torch.cat(actions)
         values = torch.cat(values).detach() # detach?
         states = torch.cat(states)
@@ -181,7 +235,7 @@ def train(opt): # opt is object storing args
             gae = gae + reward + opt.gamma * next_value.detach() * (1 - done) - value.detach()
             next_value = value
             R.append(gae + value)
-        
+
         R = R[::-1]
         R = torch.cat(R).detach()
         advantages = R - values
@@ -228,3 +282,7 @@ if __name__ == "__main__":
     opt = get_args()
     print(opt)
     train(opt)
+# if __name__ == "__main__":
+#     opt = get_args()
+#     print(opt)
+#     train(opt)

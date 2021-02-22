@@ -14,8 +14,8 @@ import cv2
 import numpy as np
 import subprocess as sp
 import torch.multiprocessing as mp
-from BBRL.src.helpers import JoypadSpace, SIMPLE_MOVEMENT, COMPLEX_MOVEMENT, RIGHT_ONLY, flag_get
-from BBRL.src.retrowrapper import RetroWrapper
+from src.helpers import JoypadSpace, SIMPLE_MOVEMENT, COMPLEX_MOVEMENT, RIGHT_ONLY, flag_get
+from src.retrowrapper import RetroWrapper
 
 SCRIPT_DIR = os.getcwd() #os.path.dirname(os.path.abspath(__file__))
 ENV_NAME = 'SMB-JU'
@@ -84,7 +84,7 @@ class CustomSkipFrame(Wrapper):
         total_reward = 0
         last_states = []
         for i in range(self.skip):
-            state, reward, done, info = self.env.step(action)
+            state, reward, done, info = self.env.step(action) # where the actual action is taken in mario
             total_reward += reward
             if i >= self.skip / 2:
                 last_states.append(state)

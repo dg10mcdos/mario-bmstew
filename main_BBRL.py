@@ -13,7 +13,6 @@ from behaviours.feature_extraction import FeatureExtraction
 from behaviours.gencsv_behaviour import GenerateDatasetBx
 from behaviours.mariodataloader import DatasetMarioBxv2
 from behaviours.utils import create_datasets_split
-from BBRL import train
 '''
 torch.save(net_motion.state_dict(), './models/bestmodel_vmt_' + namebx + str(net_motion.noframes) + 'f.pth')
             torch.save(net_bx.state_dict(), './models/bestmodel_bx_' + namebx + str(net_motion.noframes) + 'f.pth')
@@ -24,11 +23,12 @@ matplotlib.use('Agg')
 def load_experiment(filename):
     with open(filename) as json_file:
         opt = json.load(json_file)
-                                                                # current path: /home/gerardo/Documents/repos/mario-bm
-    opt['feat_path'] = os.path.abspath(opt['feat_path'])        # "./models/bestmodel_ae_128x16x16.pth"
-    opt['data_path'] = os.path.abspath(opt['data_path'])        # "./data/"
+        # current path: /home/gerardo/Documents/repos/mario-bm
+    opt['feat_path'] = os.path.abspath(opt['feat_path'])  # "./models/bestmodel_ae_128x16x16.pth"
+    opt['data_path'] = os.path.abspath(opt['data_path'])  # "./data/"
     opt['bx_data_path'] = os.path.abspath(opt['bx_data_path'])  # "./bx_data/gerardo120719_3f.csv"
     return opt
+
 
 # ['a', 'b', 'l', 'r', 'u', 'd']
 if __name__ == "__main__":
@@ -55,17 +55,17 @@ if __name__ == "__main__":
     feat_extract.to(device)
 
     transform2apply = transforms.Compose([transforms.Resize((opt['img_size'], opt['img_size'])), transforms.ToTensor()])
+    print(opt['img_size'])
     print("loading behaviours...\n")
     motion_list = [None] * 6
     b_list = [None] * 6
     for i in range(0, len(opt["buttons"])):
         motion_list[i] = VisualMotion(opt["no_frames"]).to(device)
-        motion_list[i].load_state_dict(torch.load('./models/bestmodel_vmt_' + "bx" + str(opt["buttons"][i]) + str(opt['no_frames']) + 'f.pth'))
+        motion_list[i].load_state_dict(
+            torch.load('./models/bestmodel_vmt_' + "bx" + str(opt["buttons"][i]) + str(opt['no_frames']) + 'f.pth'))
         b_list[i] = Behaviour().to(device)
-        b_list[i] = b_list[i].load_state_dict(torch.load('./models/bestmodel_bx_' + "bx" + str(opt["buttons"][i]) + str(opt["no_frames"]) + 'f.pth'))
+        b_list[i] = b_list[i].load_state_dict(
+            torch.load('./models/bestmodel_bx_' + "bx" + str(opt["buttons"][i]) + str(opt["no_frames"]) + 'f.pth'))
     print("loaded behaviours successfully!\n")
     print("training...\n")
-    sys.argv = [sys.argv[0]] # clear exp3 arg
-    train.train(b_list,motion_list)
-
-
+    # sys.argv = [sys.argv[0]] # clear exp3 arg

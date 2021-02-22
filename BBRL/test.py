@@ -6,11 +6,11 @@ import os
 os.environ['OMP_NUM_THREADS'] = '1'
 import argparse
 import torch
+from src.env import create_train_env
+from src.model import PPO
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT, COMPLEX_MOVEMENT, RIGHT_ONLY
 import torch.nn.functional as F
-from BBRL.src.RLNet import RLNet
-from BBRL.src.env import create_train_env
-from BBRL.src.model import PPO
+
 
 def get_args():
     parser = argparse.ArgumentParser(

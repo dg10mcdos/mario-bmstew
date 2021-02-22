@@ -18,10 +18,11 @@ from torch.utils.data import DataLoader, Dataset
 import torchvision
 from torchvision import transforms, utils
 
+
 class DatasetMario(Dataset):
     def __init__(self, file_path, csv_name, transform_in=None, behaviour=None):
-        self.data = pd.read_csv(file_path+"/"+csv_name)
-        self._path = file_path+"/"
+        self.data = pd.read_csv(file_path + "/" + csv_name)
+        self._path = file_path + "/"
         self.transform_in = transform_in
 
     def __len__(self):
@@ -29,7 +30,7 @@ class DatasetMario(Dataset):
 
     def __getitem__(self, index):
         # Load state and image from Mario FCEUX (after a dataset has been created with the Lua script and FM2)
-        image_file = os.path.abspath(self.data.iloc[index, 0]) #.values.astype(np.uint8).reshape((1, 28, 28))
+        image_file = os.path.abspath(self.data.iloc[index, 0])  # .values.astype(np.uint8).reshape((1, 28, 28))
         state_fn = self.data.iloc[index, 1]
 
         # Get image
@@ -54,8 +55,8 @@ class DatasetMario(Dataset):
         if "mario" in state_data:
             mario_handler = state_data['mario']
             mpos = mario_handler["pos"]
-            x1,y1,x2,y2 = mpos[0]-1,mpos[1]-8,mpos[2],mpos[3]-8 # For all items, this offsets work
-            mario_handler['pos'] = [x1,y1,x2,y2]
+            x1, y1, x2, y2 = mpos[0] - 1, mpos[1] - 8, mpos[2], mpos[3] - 8  # For all items, this offsets work
+            mario_handler['pos'] = [x1, y1, x2, y2]
             mario_handler['pos'] = np.asarray(mario_handler['pos'], dtype=np.int).reshape((2, 2))
 
             coins = mario_handler['coins']
@@ -71,23 +72,28 @@ class DatasetMario(Dataset):
             mario_data = np.zeros(9, dtype=np.int)
 
         # Get enemy info
-        #enemy_data = []
+        # enemy_data = []
         enemy_data = np.asarray([0], dtype=np.int64)
-        for i in range(0,5):
-            key = "enemy"+str(i)
+        for i in range(0, 5):
+            key = "enemy" + str(i)
             if key in state_data:
                 enemy_data = np.asarray([1], dtype=np.int64)
-                #enemy_data.append(np.asarray(state_data["enemy"+str(i)], dtype=np.int))
+                # enemy_data.append(np.asarray(state_data["enemy"+str(i)], dtype=np.int))
             # else:
-                # enemy_data.append(None)
+            # enemy_data.append(None)
 
         if self.transform_in is not None:
             image_data = self.transform_in(image_data)
 
         sample = {'image': image_data, 'state': torch.from_numpy(control_data).type(torch.long),
-                  'mario': torch.from_numpy(mario_data), 'enemy': enemy_data, 'ifile': self.data.iloc[index, 0], 'sfile': self.data.iloc[index, 1]}
+                  'mario': torch.from_numpy(mario_data), 'enemy': enemy_data, 'ifile': self.data.iloc[index, 0],
+                  'sfile': self.data.iloc[index, 1]}
 
         return sample
+
+
+
+
 
 class DatasetMarioBx(Dataset):
 
@@ -96,8 +102,8 @@ class DatasetMarioBx(Dataset):
     # we load in the controller data (buttons pressed) and convert it into a readable format i.e. not true/false for each button but instead numbers 
 
     def __init__(self, file_path, csv_name, buttontrain, transform_in=None):
-        self.data = pd.read_csv(file_path+"/"+csv_name)
-        self._path = file_path+"/"
+        self.data = pd.read_csv(file_path + "/" + csv_name)
+        self._path = file_path + "/"
         self.transform_in = transform_in
         # None is added to capture those instances where no button has been pressed
         self._buttons = {'a': 0, 'b': 1, 'down': 2, 'left': 3, 'right': 4, 'select': 5, 'start': 6, 'up': 7, 'None': 8}
@@ -108,7 +114,7 @@ class DatasetMarioBx(Dataset):
 
     def __getitem__(self, index):
         # Load state and image from Mario FCEUX (after a dataset has been created with the Lua script and FM2)
-        image_file = self._path + self.data.iloc[index, 0] #.values.astype(np.uint8).reshape((1, 28, 28))
+        image_file = self._path + self.data.iloc[index, 0]  # .values.astype(np.uint8).reshape((1, 28, 28))
         state_fn = self._path + self.data.iloc[index, 1]
         label_button = self.data.iloc[index, 2]
 
@@ -124,7 +130,7 @@ class DatasetMarioBx(Dataset):
         # 1 means press button!
         if label_button == self._button:
             control_data = np.asarray([1], dtype=np.int64)
-        else: # everything else
+        else:  # everything else
             control_data = np.asarray([0], dtype=np.int64)
 
         if self.transform_in is not None:
@@ -142,8 +148,8 @@ class DatasetMarioBxv2(Dataset):
     # we load in the controller data (buttons pressed) and convert it into a readable format i.e. not true/false for each button but instead numbers 
 
     def __init__(self, csv_name, buttontrain, transform_in=None):
-        self.data = pd.read_csv(csv_name) # pd.read_csv(file_path+"/"+csv_name)
-        self._path = "./"+"/"
+        self.data = pd.read_csv(csv_name)  # pd.read_csv(file_path+"/"+csv_name)
+        self._path = "./" + "/"
         self.transform_in = transform_in
         # None is added to capture those instances where no button has been pressed
         self._buttons = {'a': 0, 'b': 1, 'down': 2, 'left': 3, 'right': 4, 'select': 5, 'start': 6, 'up': 7, 'None': 8}
@@ -156,11 +162,13 @@ class DatasetMarioBxv2(Dataset):
     def __getitem__(self, index):
         images = []
         # Load state and image from Mario FCEUX (after a dataset has been created with the Lua script and FM2)
-        self._noframes = self.data.iloc[index,0] # e.g for exp3 this is 3
-        seq = self.data.iloc[index, 1]           # sequence number will essentially be frame number e.g. 1,2,3, n end of run. exp3 one starts at 2
-        files = self.data.iloc[index, 4].replace("'","").strip('][').split(', ') # array of image files (column E in bx_data) [img1pth, img2pth, img3pth] <-python list of strings
+        self._noframes = self.data.iloc[index, 0]  # e.g for exp3 this is 3
+        seq = self.data.iloc[
+            index, 1]  # sequence number will essentially be frame number e.g. 1,2,3, n end of run. exp3 one starts at 2
+        files = self.data.iloc[index, 4].replace("'", "").strip('][').split(
+            ', ')  # array of image files (column E in bx_data) [img1pth, img2pth, img3pth] <-python list of strings
 
-        for ifiles in files:                    # for each image file in the array, get the image and convert it into RGB + apply the transform to it
+        for ifiles in files:  # for each image file in the array, get the image and convert it into RGB + apply the transform to it
             image_file = self._path + ifiles
 
             # Get image
@@ -172,9 +180,9 @@ class DatasetMarioBxv2(Dataset):
 
             images.append(image_data)
 
-        label_button = self.data.iloc[index, 6]  # label is from last image in the list above 
+        label_button = self.data.iloc[index, 6]  # label is from last image in the list above
         # label_button is rbrbrb for example
-        
+
         # CLASSIFICATION: 1 means press button!
         # if self._button in label_button:
         #     control_data = np.asarray([1], dtype=np.int64)
@@ -182,14 +190,14 @@ class DatasetMarioBxv2(Dataset):
         #     control_data = np.asarray([0], dtype=np.int64)
 
         # REGRESSION: Compute prob of pressing button in noFrames
-        if type(label_button) != float:                                         # presumably an empty column will be represented as 0.0 when we load it
-            prob_ocurr = label_button.count(self._button) / self._noframes      # I think this counts the number of occurences of the button we are training e.g. a, label_button = abab frames = 3, 
-                                                                                # prob_occur = 2/3
+        if type(label_button) != float:  # presumably an empty column will be represented as 0.0 when we load it
+            prob_ocurr = label_button.count(self._button) / self._noframes  # I think this counts the number of occurences of the button we are training e.g. a, label_button = abab frames = 3,
+            # prob_occur = 2/3
             control_data = np.asarray([prob_ocurr], dtype=np.float)
-        else: # everything else
+        else:  # everything else
             control_data = np.asarray([0.0], dtype=np.float)
-
-        sample = {'seq': seq, 'image': images, 'state': torch.from_numpy(control_data).type(torch.float32)}   # sample = {frame_sequence_number, images_in_this sequence_converted & transformed for NN, probability of the button being trained being pressed}
+        sample = {'seq': seq, 'image': images, 'state': torch.from_numpy(control_data).type(
+            torch.float32)}  # sample = {frame_sequence_number, images_in_this sequence_converted & transformed for NN, probability of the button being trained being pressed}
         return sample
 
 
@@ -198,9 +206,10 @@ if __name__ == "__main__":
     # DEMO
     # ***********************
 
-    transform2apply = transforms.Compose([transforms.Resize((256,256)), transforms.ToTensor()])
+    transform2apply = transforms.Compose([transforms.Resize((256, 256)), transforms.ToTensor()])
 
-    dataset = DatasetMarioBxv2(csv_name=os.path.abspath("./bx_data/gerardo120719_5f.csv"), buttontrain='b', transform_in=transform2apply)
+    dataset = DatasetMarioBxv2(csv_name=os.path.abspath("./bx_data/gerardo120719_5f.csv"), buttontrain='b',
+                               transform_in=transform2apply)
     # dataset = DatasetMarioBx(file_path="./", csv_name="./bx_data/allitems_A.csv", buttontrain='a', transform_in=transform2apply)
     print(len(dataset))
     sample = dataset[15]
@@ -209,5 +218,3 @@ if __name__ == "__main__":
     # mario_dataset = DatasetMario(file_path="./", csv_name="allitems.csv", transform_in=transform2apply)
     # sample = mario_dataset.__getitem__(0)
     # print(sample)
-
-    

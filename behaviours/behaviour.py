@@ -88,19 +88,20 @@ def trainNetBx(net_motion, net_bx, feat_extract, train_loader, val_loader, n_epo
     stats_train = []  # [[epoch, mu, standev, var],...]
     stats_val = []
     # Loop for n_epochs
+
     for epoch in range(n_epochs):
         print_every = n_batches // 10
         start_time = time.time()
         total_train_loss = 0
         losses_list = []
-
-        for i, data in enumerate(train_loader, 0):  # data:[ seq, image, state ]
+        for i, data in enumerate(train_loader, 0):  # data:[ seq, image, state ] len(train_loader) = 44564/256 = 175 i goes to 175
             # Get inputs
-            inputs = data['image']  # image(s) converted and transformed in mariodataloader - in tensor form (256,3,256,256) assuming (index, frame in no_frame, row, pixel)
+            inputs = data['image']  # image(s) converted and transformed in mariodataloader - in tensor form 3x(256,3,256,256) assuming (index, frame in no_frame, row, pixel)
             controller = data['state'].to(device)  # (256,1) assuming that this is whether button being trained is pressed or not
             controller = Variable(controller)  # .view(-1)
             controller = controller.squeeze(1) # (256) just removes dimension turning data into vector
             feats = []
+
             for j in range(0, len(inputs)):  # in this example 3
                 image = Variable(inputs[j].to(device))
                 feats.append(feat_extract.encode(image))
@@ -119,6 +120,7 @@ def trainNetBx(net_motion, net_bx, feat_extract, train_loader, val_loader, n_epo
             optimizer_bx.step() # update behaviour nn (weight = weight - learning_rate * gradient)
 
             mse = nn.MSELoss(reduction='none')(output_control, controller) # compute loss
+            # print(controller)
             losses_list.append(mse.data.cpu().numpy().tolist()) # append step loss to list. [loss1(256), loss2[256]...loss18[256]
             # Print statistics
             total_train_loss += loss.item() # add loss for step

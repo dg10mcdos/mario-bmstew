@@ -3,12 +3,12 @@
 """
 
 import torch
-from BBRL.src.env import create_train_env
-from BBRL.src.model import PPO
+from src.env import create_train_env
+from src.model import PPO
 import torch.nn.functional as F
 from collections import deque
 import numpy as np
-from BBRL.src.helpers import SIMPLE_MOVEMENT, COMPLEX_MOVEMENT, RIGHT_ONLY, flag_get
+from src.helpers import SIMPLE_MOVEMENT, COMPLEX_MOVEMENT, RIGHT_ONLY, flag_get
 import csv, os
 import time
 

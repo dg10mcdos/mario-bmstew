@@ -65,10 +65,10 @@ if __name__ == "__main__":
 
     # ********************************
     # Train Behaviours!
-
+    print(opt)
     for eachBx in opt["buttons"]:
-        print(eachBx)
-        print(opt['no_frames'])
+
+        print("Training " + eachBx + "...\n")
         dataset = DatasetMarioBxv2(csv_name=opt["bx_data_path"], buttontrain=eachBx, transform_in=transform2apply)  # call to mariodataloader, 
         # returns [
         # [frame_sequence_number, images_in_this sequence_converted & transformed for NN, probability of the button being trained being pressed]
@@ -77,11 +77,11 @@ if __name__ == "__main__":
         # ]
         # mariodataloader.py goes into ./data/runs/images & states, then loads this data in a way
         # that can be parsed into a neural network
-         
+
         train_loader, validation_loader = create_datasets_split(dataset, opt['shuffle_dataset'], opt['validation_split'], opt['batch_train'], opt['batch_validation'])  # call to helper function in utils.py
         net_motion = VisualMotion(opt["no_frames"]).to(device)
         net_bx = Behaviour().to(device)
-        trainNetBx(net_motion, net_bx, feat_extract, train_loader, validation_loader, opt['epochs'], opt['learning_rate'], device, "bx"+eachBx)  # call to behaviour.py
+        # trainNetBx(net_motion, net_bx, feat_extract, train_loader, validation_loader, opt['epochs'], opt['learning_rate'], device, "bx"+eachBx)  # call to behaviour.py
         print("Training "+eachBx+" done!")
     # ********************************
 

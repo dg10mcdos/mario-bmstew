@@ -84,7 +84,7 @@ class CustomSkipFrame(Wrapper):
         total_reward = 0
         last_states = []
         for i in range(self.skip):
-            state, reward, done, info = self.env.step(action)
+            state, reward, done, info = self.env.step(action) # where the actual action is taken in mario
             total_reward += reward
             if i >= self.skip / 2:
                 last_states.append(state)
