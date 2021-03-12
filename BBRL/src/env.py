@@ -54,10 +54,11 @@ class CustomReward(Wrapper):
         else:
             self.monitor = None
 
-    def step(self, action):
+    def step(self, action): #process_frame
         state, reward, done, info = self.env.step(action)
         if self.monitor:
             self.monitor.record(state)
+        # print(state.shape) # 224, 240, 3
         state = process_frame(state)
         reward += (info["score"] - self.curr_score) / 40.
         self.curr_score = info["score"]

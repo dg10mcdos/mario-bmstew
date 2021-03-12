@@ -28,7 +28,8 @@ from behaviours.behaviour import VisualMotion
 from src.fullyconnected import fullyconnected
 from behaviours import plot
 TEST_ON_THE_GO = True
-
+import argparse
+import torch
 
 def get_args():
     parser = argparse.ArgumentParser(
@@ -65,7 +66,14 @@ model = Net()
 model.load_state_dict(torch.load(PATH))
 model.eval()
 '''
-
+# STATE = PROCESS_FRAME
+# def process_frame(frame):
+#     if frame is not None:
+#         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+#         frame = cv2.resize(frame, (84, 84))[None, :, :] / 255.
+#         return frame
+#     else:
+#         return np.zeros((1, 84, 84))
 
 # def train(opt): # opt is object storing args
 #     if torch.cuda.is_available():
@@ -286,7 +294,7 @@ def train_fully_connected(opt, b_list, motion_list, feat_extract, train_loader, 
     n_batches = len(train_loader)
     params = list(fcnet.parameters())
     optimizer_fc = optim.Adam(params, lr=lr)
-    scheduler = StepLR(optimizer_fc, step_size=5, gamma=0.4)
+    scheduler = StepLR(optimizer_fc, step_size=3, gamma=0.9)
     lr_step = optimizer_fc.param_groups[0]['lr']
     training_start_time = time.time()
 
@@ -444,7 +452,7 @@ if __name__ == "__main__":
     feat_extract = FeatureExtraction(device)
     feat_extract.load_state_dict(torch.load("/home/gerardo/Documents/repos/mario-bm/models/bestmodel_ae_128x16x16.pth"))
     feat_extract.to(device)
-    print("loaded.\n loading behaviours & motion...\n")
+    print("loaded.\nloading behaviours & motion...\n")
     # print(feat_extract)
     motion_list = [None] * 6
     b_list = [None] * 6
@@ -458,9 +466,9 @@ if __name__ == "__main__":
         b_list[i].load_state_dict(
             torch.load('/home/gerardo/Documents/repos/mario-bm/models/bestmodel_bx_' + "bx" + str(button_list[i]) + str(
                 3) + 'f.pth'))
-    print("loaded. retrieving arguments...\n")
+    print("loaded.\nretrieving arguments...\n")
     opt = get_args()
-    print("retrieved. loading data...\n")
+    print("loaded.\nretrieved. loading data...\n")
 
     transform2apply = transforms.Compose([transforms.Resize((256, 256)), transforms.ToTensor()])
     dataset = DatasetMarioFc(file_path="/home/gerardo/Documents/repos/mario-bm",
@@ -469,7 +477,7 @@ if __name__ == "__main__":
     train_loader, validation_loader = create_datasets_split(dataset, True, 0.8, 256, 128)
     fcnet = fullyconnected().to(device)
 
-    print("training...")
+    print("loaded.\ntraining...")
     train_fully_connected(opt, b_list, motion_list, feat_extract, train_loader, validation_loader, 30, 0.001, device,
                           fcnet)
 
