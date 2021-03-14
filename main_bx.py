@@ -81,7 +81,7 @@ if __name__ == "__main__":
         train_loader, validation_loader = create_datasets_split(dataset, opt['shuffle_dataset'], opt['validation_split'], opt['batch_train'], opt['batch_validation'])  # call to helper function in utils.py
         net_motion = VisualMotion(opt["no_frames"]).to(device)
         net_bx = Behaviour().to(device)
-        # trainNetBx(net_motion, net_bx, feat_extract, train_loader, validation_loader, opt['epochs'], opt['learning_rate'], device, "bx"+eachBx)  # call to behaviour.py
+        trainNetBx(net_motion, net_bx, feat_extract, train_loader, validation_loader, opt['epochs'], opt['learning_rate'], device, "bx"+eachBx)  # call to behaviour.py
         print("Training "+eachBx+" done!")
     # ********************************
 

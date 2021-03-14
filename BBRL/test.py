@@ -22,9 +22,13 @@ from src.helpers import flag_get
 from src import fullyconnected
 from behaviours.feature_extraction import FeatureExtraction
 from behaviours.behaviour import Behaviour, VisualMotion
-
+from PIL import Image
+from torchvision import transforms
+from torch.autograd import Variable
 
 TEST_ON_THE_GO = True
+
+
 # RIGHT_ONLY = [
 #     ['noop'],
 #     ['right'],
@@ -144,10 +148,10 @@ def get_args():
 def test(opt):
     ############ setup pytorch
     device = torch.device("cuda" if (torch.cuda.is_available()) else "cpu")
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed(123)
-    else:
-        torch.manual_seed(123)
+    # if torch.cuda.is_available():
+    #     torch.cuda.manual_seed(123)
+    # else:
+    #     torch.manual_seed(123)
 
     ############ setup save dirs
     opt.saved_path = os.getcwd() + '/BBRL/tested_model' + opt.saved_path
@@ -211,8 +215,8 @@ def test(opt):
     for i in range(0, len(button_list)):
         motion_list[i] = VisualMotion(3).to(device)
         motion_list[i].load_state_dict(torch.load(
-                '/home/gerardo/Documents/repos/mario-bm/models/bestmodel_vmt_' + "bx" + str(button_list[i])+ str(3) +
-                'f.pth'))
+            '/home/gerardo/Documents/repos/mario-bm/models/bestmodel_vmt_' + "bx" + str(button_list[i]) + str(3) +
+            'f.pth'))
         for param in motion_list[i].parameters():
             param.requires_grad = False
         motion_list[i].eval()
@@ -229,20 +233,58 @@ def test(opt):
         param.requires_grad = False
     feat_extract.eval()
 
-    for param in model.parameters():                                                            # <-- freeze upper layer
+    for param in model.parameters():  # <-- freeze upper layer
         param.requires_grad = False
     model.eval()
-
+    params = list(model.parameters())
     ############ test
     # state, reward, done, info = env.step(x) x = action in movement array
+    state, reward, done, info, new_states = env.step(0)  # state should be 3x[w:240,h:224,rgb:3] 1,672,240,3
+    transform2apply = transforms.Compose([transforms.Resize((256, 256)), transforms.ToTensor()])
+    env.render()
+    while True:  # run right
+        time.sleep(0.04)
+        state = state.squeeze(0)
+        state = state.reshape((3, 224, 240, 3))
+        imgarrays = []
+        for i in range(0, len(new_states)):
+            img = Image.fromarray(new_states[i]).convert("RGB")
+            imgarrays.append(transform2apply(img).unsqueeze(0).to(device))
+        feats = []
+        for img in imgarrays:
+            feats.append(feat_extract.encode(img))
+        features = torch.cat(tuple(feats), dim=1)
+        motions = []
+        for i in range(0, len(motion_list)):
+            motions.append(motion_list[i](features))
+        prob_buttons = model(motions[0]).squeeze(0)
+        b_result = []
+        for i in range(0, len(button_list)):
+            b_result.append(b_list[i](motions[i]))
+        b_to_b_dict = {
+            'a': 'A',
+            'b': 'B',
+            'l': 'left',
+            'r': 'right',
+            'u': 'up',
+            'd': 'down'
+        }
+        push = []
+        for i in range(0, len(button_list)):
+            if prob_buttons[i] > 0.1 and b_result[i] > 0.1:
+                push.append(b_to_b_dict[button_list[i]])
+        action = 0
+        for i in range(0,len(COMPLEX_MOVEMENT)):
+            if set(COMPLEX_MOVEMENT[i]) == set(push):
+                # print("Match")
+                # print(f"push: {push}, COMPLEX_MOVEMENT: {COMPLEX_MOVEMENT[i]}, index: {i}")
+                action = i
 
-    while True: # run right
-        state, reward, done, info = env.step(1)
-
+        state, reward, done, info, new_states = env.step(action)
         env.render()
-
-
-
+        if done == True:
+            env.reset()
+            state, reward, done, info, new_states = env.step(0)  # state should be 3x[w:240,h:224,rgb:3] 1,672,240,3
 
 
 # def test(opt):

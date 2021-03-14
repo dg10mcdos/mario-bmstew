@@ -165,6 +165,7 @@ class DatasetMarioBxv2(Dataset):
 
             # Get image
             img_rgba = Image.open(image_file)
+
             image_data = img_rgba.convert('RGB')
 
             if self.transform_in is not None:
@@ -236,11 +237,16 @@ class DatasetMarioFc(Dataset):
 
             # Get image
             img_rgba = Image.open(image_file)
+
+            # with Image.open(image_file) as img:
+            #     width, height = img.size
+            #     print(f"width: {width}\n height: {height}")
             image_data = img_rgba.convert('RGB')
 
+            # print(image_data.shape)
             if self.transform_in is not None:
                 image_data = self.transform_in(image_data)
-
+            # print(image_data.shape)
             images.append(image_data)
         label_button = self.data.iloc[index, 6]
         if type(label_button) != float:  # presumably an empty column will be represented as 0.0 when we load it
@@ -254,4 +260,5 @@ class DatasetMarioFc(Dataset):
         else:  # nothing pressed
             control_data = np.asarray([0.0, 0.0, 0.0, 0.0, 0.0, 0.0], dtype=np.float)
         data = {'seq': seq, 'image': images, 'state': torch.from_numpy(control_data).type(torch.float32)}
+        # print(images[0])
         return data

@@ -6,6 +6,7 @@ import os
 import gym
 import retro
 # import gym_super_mario_bros
+from PIL import Image
 from gym.spaces import Box
 from gym import Wrapper
 # from nes_py.wrappers import JoypadSpace
@@ -37,8 +38,8 @@ class Monitor:
 
 def process_frame(frame):
     if frame is not None:
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-        frame = cv2.resize(frame, (84, 84))[None, :, :] / 255.
+        # frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+        # frame = cv2.resize(frame, (84, 84))[None, :, :] / 255.
         return frame
     else:
         return np.zeros((1, 84, 84))
@@ -60,6 +61,9 @@ class CustomReward(Wrapper):
             self.monitor.record(state)
         # print(state.shape) # 224, 240, 3
         state = process_frame(state)
+        # img = Image.fromarray(state, 'RGB')
+        # img.save('my.png')
+        # img.show()
         reward += (info["score"] - self.curr_score) / 40.
         self.curr_score = info["score"]
         if done:
@@ -75,28 +79,34 @@ class CustomReward(Wrapper):
 
 
 class CustomSkipFrame(Wrapper):
-    def __init__(self, env, skip=4):
+    def __init__(self, env, skip=3): #################
         super(CustomSkipFrame, self).__init__(env)
         self.observation_space = Box(low=0, high=255, shape=(skip, 84, 84))
         self.skip = skip
         self.states = np.zeros((skip, 84, 84), dtype=np.float32)
+        self.images = []
 
     def step(self, action):
         total_reward = 0
         last_states = []
+        new_states = []
         for i in range(self.skip):
             state, reward, done, info = self.env.step(action) # where the actual action is taken in mario
             total_reward += reward
+            new_states.append(state)
             if i >= self.skip / 2:
                 last_states.append(state)
             if done:
                 self.reset()
-                return self.states[None, :, :, :].astype(np.float32), total_reward, done, info
+                # return self.states[None, :, :, :].astype(np.float32), total_reward, done, info
+                return self.states[None, :, :, :], total_reward, done, info, new_states
+
         max_state = np.max(np.concatenate(last_states, 0), 0)
         self.states[:-1] = self.states[1:]
         self.states[-1] = max_state
-        return self.states[None, :, :, :].astype(np.float32), total_reward, done, info
-
+        # return self.states[None, :, :, :].astype(np.float32), total_reward, done, info
+        return self.states[None, :, :, :], total_reward, done, info,new_states
+        # return last_states, total_reward, done, info
     def reset(self):
         state = self.env.reset()
         self.states = np.concatenate([state for _ in range(self.skip)], 0)

@@ -99,6 +99,7 @@ def trainNetBx(net_motion, net_bx, feat_extract, train_loader, val_loader, n_epo
             controller = data['state'].to(device)  # (256,1) assuming that this is whether button being trained is pressed or not
             controller = Variable(controller)  # .view(-1)
             controller = controller.squeeze(1) # (256) just removes dimension turning data into vector
+            # print(inputs[0].shape)
             feats = []
             for j in range(0, len(inputs)):  # in this example 3
                 image = Variable(inputs[j].to(device))

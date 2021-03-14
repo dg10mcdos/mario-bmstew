@@ -101,9 +101,9 @@ def trainNetBx(net_motion, net_bx, feat_extract, train_loader, val_loader, n_epo
             controller = Variable(controller)  # .view(-1)
             controller = controller.squeeze(1) # (256) just removes dimension turning data into vector
             feats = []
-
             for j in range(0, len(inputs)):  # in this example 3
                 image = Variable(inputs[j].to(device))
+                # print(image.shape)
                 feats.append(feat_extract.encode(image))
             features = torch.cat(tuple(feats), dim=1)  # concatenate frames (no_frames stuff) forming longer tensor, 256, 384,16,16
             # Set the parameter gradients to zero

@@ -20,11 +20,14 @@ class fullyconnected(nn.Module):
         super(fullyconnected, self).__init__()
         self.fc1 = nn.Linear(128 * 4 * 4, 128)  # (6*4*4, 1)
         self.fc2 = nn.Linear(128, 6)
+        self.soft = nn.Softmax(dim=1)
 
     def forward(self, x): # x is pixel motion from visualMotion
         x2 = x.view(x.size(0), -1)
         l1 = self.fc1(x2)
+        l1 = F.relu(l1)
         output = self.fc2(l1)
+        output = self.soft(output)
         return output
 
     @staticmethod

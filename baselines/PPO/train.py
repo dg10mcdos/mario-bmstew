@@ -3,14 +3,14 @@ import os
 os.environ['OMP_NUM_THREADS'] = '1'
 import argparse
 import torch
-from src.env import MultipleEnvironments
+from src.env import MultipleEnvironments, create_train_env
 from src.model import PPO
 from src.process import evaluate
 import torch.multiprocessing as _mp
 from torch.distributions import Categorical
 import torch.nn.functional as F
 import numpy as np
-import csv, time
+import shutil, csv, time
 from src.helpers import flag_get
 TEST_ON_THE_GO = True
 

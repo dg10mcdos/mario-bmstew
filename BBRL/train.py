@@ -332,7 +332,10 @@ def train_fully_connected(opt, b_list, motion_list, feat_extract, train_loader, 
             #     output = b_list[i](motions[i])
             #     output = torch.flatten(output)
             #     behaviours[:, i] = output
-            behaviours = fcnet(motions[0])  # using only first motion as example. hopefully should be same
+            behaviours = fcnet(motions[0])# using only first motion as example. hopefully should be same
+            # print(behaviours[4])
+
+            # print(motions[0].shape)
             loss = fcnet.loss_function(behaviours, controller)
             loss.backward()
             optimizer_fc.step()
@@ -472,7 +475,7 @@ if __name__ == "__main__":
 
     transform2apply = transforms.Compose([transforms.Resize((256, 256)), transforms.ToTensor()])
     dataset = DatasetMarioFc(file_path="/home/gerardo/Documents/repos/mario-bm",
-                             csv_name="/home/gerardo/Documents/repos/mario-bm/bx_data/gerardo120719_3f.csv",
+                             csv_name="/home/gerardo/Documents/repos/mario-bm/bx_data/allitems.csv",
                              transform_in=transform2apply)
     train_loader, validation_loader = create_datasets_split(dataset, True, 0.8, 256, 128)
     fcnet = fullyconnected().to(device)
