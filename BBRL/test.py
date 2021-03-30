@@ -25,9 +25,15 @@ from behaviours.behaviour import Behaviour, VisualMotion
 from PIL import Image
 from torchvision import transforms
 from torch.autograd import Variable
+from src.PPOLike import PPOLike
 
 TEST_ON_THE_GO = True
-
+def check_flag(info):
+    out = 0
+    for i in info:
+        if flag_get(i):
+            out += 1
+    return out
 
 # RIGHT_ONLY = [
 #     ['noop'],
@@ -70,7 +76,7 @@ def get_args():
     parser = argparse.ArgumentParser(
         """Implementation of model described in the paper: Proximal Policy Optimization Algorithms for Super Mario Bros""")
     parser.add_argument("--world", type=int, default=1)
-    parser.add_argument("--stage", type=int, default=1)
+    parser.add_argument("--stage", type=int, default=2)
     parser.add_argument("--action_type", type=str, default="simple")
     parser.add_argument('--lr', type=float, default=1e-4)
     parser.add_argument('--gamma', type=float, default=0.9, help='discount factor for rewards')
@@ -188,9 +194,10 @@ def test(opt):
     transform2apply = transforms.Compose([transforms.Resize((256, 256)), transforms.ToTensor()])
     env.render()
     time_for_random = 0
-
+    reward_list = []
+    reward_list.append(reward)
     while True:  # run right
-        time.sleep(0.04)
+        time.sleep(0.007)
         state = state.squeeze(0)
         state = state.reshape((3, 224, 240, 3))
         imgarrays = []
@@ -220,10 +227,10 @@ def test(opt):
         for i in range(0, len(button_list)):
             if prob_buttons[i] > 0.1 and b_result[i] > 0.1:
                 push.append(b_to_b_dict[button_list[i]])
-        if r_taken > 0:
+        if r_taken > 0 and reward == 0 and np.array(reward_list[-100:]).sum() < 80:
             push.append(random_action)
             r_taken-=1
-        if time_for_random>=100:
+        if time_for_random>=40 and reward == 0:
             # r_action = np.random.randint(0,6)
             # print(set(push))
             # print("x = ", r_action, "(", b_to_b_dict[button_list[r_action]], ")")
@@ -236,7 +243,7 @@ def test(opt):
             #     r_taken = 5
             random_action = "A"
             push.append("A")
-            r_taken = 5
+            r_taken = 15
             time_for_random = 0
 
         else:
@@ -251,10 +258,13 @@ def test(opt):
                 action = i
 
         state, reward, done, info, new_states = env.step(action)
+        reward_list.append(reward)
+
         env.render()
         if done == True:
             env.reset()
             state, reward, done, info, new_states = env.step(0)  # state should be 3x[w:240,h:224,rgb:3] 1,672,240,3
+
 def PPOmodetrain(opt):
     ############ setup pytorch
     device = torch.device("cuda" if (torch.cuda.is_available()) else "cpu")
@@ -458,6 +468,7 @@ def PPOmodetrain(opt):
                 critic_loss = F.smooth_l1_loss(R[batch_indices], value.squeeze())
                 entropy_loss = torch.mean(new_m.entropy())
                 total_loss = actor_loss + critic_loss - opt.beta * entropy_loss
+                optimizer.zero_grad()
                 optimizer.zero_grad()
                 total_loss.backward()
                 torch.nn.utils.clip_grad_norm_(model.parameters(), 0.5)

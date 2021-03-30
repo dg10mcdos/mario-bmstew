@@ -129,6 +129,7 @@ def train(opt): # opt is object storing args
     # Create environments
     envs = MultipleEnvironments(opt.world, opt.stage, opt.action_type, opt.num_processes)
     # Create model and optimizer
+    print("actions: ",envs.num_actions,"states: ",  envs.num_states)
     model = PPO(envs.num_states, envs.num_actions) # 4 states(assuming processes), 7 actions (buttons)
     if torch.cuda.is_available():
         model.cuda()
@@ -174,14 +175,17 @@ def train(opt): # opt is object storing args
             states.append(curr_states)
 
             logits, value = model(curr_states) # actor, critic
-
+            # print(logits.shape)
             # actor [4,7] "score" for pressing buttons aka given our state probability of each action
             # critic [4,1] q-value for state
             values.append(value.squeeze()) # critic [4,1] -> 4
-            policy = F.softmax(logits, dim=1) # turns action scores into probabilities
-            old_m = Categorical(policy) # actions with probabilities
-            action = old_m.sample() # choose random action wrt probabilities
 
+            policy = F.softmax(logits, dim=1) # turns action scores into probabilities
+
+            old_m = Categorical(policy) # actions with probabilities
+            # print(old_m)
+            action = old_m.sample() # choose random action wrt probabilities
+            print(action)
 
 
             actions.append(action) # record action
@@ -189,8 +193,8 @@ def train(opt): # opt is object storing args
             old_log_policies.append(old_log_policy) # record action probability
             # Evaluate predicted action
             result = []
-            print(action.shape)
-            print(action[0].cpu().item())
+            # print(action.shape)
+            # print(action[0].cpu().item())
             # ac = action.cpu().item()
             if torch.cuda.is_available():
                 # [agent_conn.send(("step", act)) for agent_conn, act in zip(envs.agent_conns, action.cpu())]
