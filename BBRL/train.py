@@ -66,184 +66,6 @@ model = Net()
 model.load_state_dict(torch.load(PATH))
 model.eval()
 '''
-# STATE = PROCESS_FRAME
-# def process_frame(frame):
-#     if frame is not None:
-#         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-#         frame = cv2.resize(frame, (84, 84))[None, :, :] / 255.
-#         return frame
-#     else:
-#         return np.zeros((1, 84, 84))
-
-# def train(opt): # opt is object storing args
-#     if torch.cuda.is_available():
-#         torch.cuda.manual_seed(123)
-#     else:
-#         torch.manual_seed(123)
-#
-#     opt.saved_path = os.getcwd() + '/baselines/PPO/' + opt.saved_path
-#
-#
-#     if not os.path.isdir(opt.saved_path):
-#         os.makedirs(opt.saved_path)
-#
-#     savefile = opt.saved_path + '/PPO_train.csv'
-#     print(savefile)
-#     title = ['Loops', 'Steps', 'Time', 'AvgLoss', 'MeanReward', "StdReward", "TotalReward", "Flags"]
-#     with open(savefile, 'w', newline='') as sfile:
-#         writer = csv.writer(sfile)
-#         writer.writerow(title)
-#
-#     # Create environments
-#     envs = MultipleEnvironments(opt.world, opt.stage, opt.action_type, opt.num_processes)
-#     # Create model and optimizer
-#     model = PPO(envs.num_states, envs.num_actions) # 4 states(assuming processes), 7 actions (buttons)
-#     if torch.cuda.is_available():
-#         model.cuda()
-#     model.share_memory() # pytorch what it says on the tin.
-#     optimizer = torch.optim.Adam(model.parameters(), lr=opt.lr)
-#
-#     if TEST_ON_THE_GO:
-#         # evaluate(opt, model, envs.num_states, envs.num_actions)
-#         mp = _mp.get_context("spawn")
-#         process = mp.Process(target=evaluate, args=(opt, model, envs.num_states, envs.num_actions)) # 4 states, 7 actions (buttons)
-#         process.start()
-#     # Reset envs
-#     curr_states = [] # current state of each env
-#     [curr_states.append(env.reset()) for env in envs.envs]
-#
-#     curr_states = torch.from_numpy(np.concatenate(curr_states, 0))
-#     if torch.cuda.is_available():
-#         curr_states = curr_states.cuda() # chuck it on gpu
-#
-#     tot_loops = 0
-#     tot_steps = 0
-#
-#     # Start main loop (EXECUTED AFTER EACH ACTION)
-#     while True:
-#         # Save model each loop
-#         # if tot_loops % opt.save_interval == 0 and tot_loops > 0:
-#         #     # torch.save(model.state_dict(), "{}/ppo_super_mario_bros_{}_{}".format(opt.saved_path, opt.world, opt.stage))
-#         #     torch.save(model.state_dict(), "{}/ppo_super_mario_bros_{}_{}_{}".format(opt.saved_path, opt.world, opt.stage, tot_loops))
-#
-#         start_time = time.time()
-#
-#         # Accumulate evidence
-#         tot_loops += 1
-#         old_log_policies = []
-#         actions = [] # record of actions
-#         values = [] # record of q values
-#         states = [] # record of states of processes
-#         rewards = []
-#         dones = []
-#         flags = []
-#         for _ in range(opt.num_local_steps):
-#             # From given states, predict an action
-#             states.append(curr_states)
-#
-#             logits, value = model(curr_states) # actor, critic
-#
-#             # actor [4,7] "score" for pressing buttons aka given our state probability of each action
-#             # critic [4,1] q-value for state
-#             values.append(value.squeeze()) # critic [4,1] -> 4
-#             policy = F.softmax(logits, dim=1) # turns action scores into probabilities
-#             old_m = Categorical(policy) # actions with probabilities
-#             action = old_m.sample() # choose random action wrt probabilities
-#
-#
-#
-#             actions.append(action) # record action
-#             old_log_policy = old_m.log_prob(action) # probability of action
-#             old_log_policies.append(old_log_policy) # record action probability
-#             # Evaluate predicted action
-#             result = []
-#             # print(action.shape)
-#             # print(action[0].cpu().item())
-#             # ac = action.cpu().item()
-#             if torch.cuda.is_available():
-#                 # [agent_conn.send(("step", act)) for agent_conn, act in zip(envs.agent_conns, action.cpu())]
-#                 [result.append(env.step(act.item())) for env, act in zip(envs.envs, action.cpu())] # take action,
-#             else:
-#                 #[agent_conn.send(("step", act)) for agent_conn, act in zip(envs.agent_conns, action)]
-#                 [result.append(env.step(act.item())) for env, act in zip(envs.envs, action)]
-#                 # result :
-#                 # state[array(28224)],
-#                 # reward - number
-#                 # done - boolean
-#                 # info - [{'levelLo': 0, 'enemyType5': 0, 'xscrollLo': 16, 'floatState': 0, 'enemyType4': 0, 'status': 8, 'levelHi': 0, 'score': 0, 'lives': 2,
-#                 # 'scrollamaount': 1, 'scrolling': 16, 'xscrollHi': 0, 'enemyType2': 0, 'time': 397, 'enemyType3': 0, 'coins': 0, 'gameMode': 1, 'enemyType1': 0}]
-#             state, reward, done, info = zip(*result)
-#             state = torch.from_numpy(np.concatenate(state, 0))
-#
-#             if torch.cuda.is_available():
-#                 state = state.cuda()
-#                 reward = torch.cuda.FloatTensor(reward)
-#                 done = torch.cuda.FloatTensor(done)
-#             else:
-#                 reward = torch.FloatTensor(reward)
-#                 done = torch.FloatTensor(done)
-#
-#             rewards.append(reward)
-#             dones.append(done)
-#             flags.append(check_flag(info) / opt.num_processes)
-#             curr_states = state
-#
-#         # Training stage
-#         _, next_value, = model(curr_states) # retrieve next q value
-#         next_value = next_value.squeeze()
-#         old_log_policies = torch.cat(old_log_policies).detach()
-#         # print(actions[0][:])
-#         actions = torch.cat(actions)
-#         values = torch.cat(values).detach() # detach?
-#         states = torch.cat(states)
-#         gae = 0 # generalised advantage estimator?
-#         R = []
-#         for value, reward, done in list(zip(values, rewards, dones))[::-1]:
-#             gae = gae * opt.gamma * opt.tau
-#             gae = gae + reward + opt.gamma * next_value.detach() * (1 - done) - value.detach()
-#             next_value = value
-#             R.append(gae + value)
-#
-#         R = R[::-1]
-#         R = torch.cat(R).detach()
-#         advantages = R - values
-#         avg_loss = []
-#         for _ in range(opt.num_epochs):
-#             indice = torch.randperm(opt.num_local_steps * opt.num_processes)
-#             for j in range(opt.batch_size):
-#                 batch_indices = indice[int(j * (opt.num_local_steps * opt.num_processes / opt.batch_size)): int((j + 1) * (
-#                                         opt.num_local_steps * opt.num_processes / opt.batch_size))]
-#                 logits, value = model(states[batch_indices])
-#                 new_policy = F.softmax(logits, dim=1)
-#                 new_m = Categorical(new_policy)
-#                 new_log_policy = new_m.log_prob(actions[batch_indices])
-#                 ratio = torch.exp(new_log_policy - old_log_policies[batch_indices])
-#                 actor_loss = -torch.mean(torch.min(ratio * advantages[batch_indices], torch.clamp(ratio, 1.0 - opt.epsilon, 1.0 + opt.epsilon) * advantages[batch_indices]))
-#                 # critic_loss = torch.mean((R[batch_indices] - value) ** 2) / 2
-#                 critic_loss = F.smooth_l1_loss(R[batch_indices], value.squeeze())
-#                 entropy_loss = torch.mean(new_m.entropy())
-#                 total_loss = actor_loss + critic_loss - opt.beta * entropy_loss
-#                 optimizer.zero_grad()
-#                 total_loss.backward()
-#                 torch.nn.utils.clip_grad_norm_(model.parameters(), 0.5)
-#                 optimizer.step()
-#                 avg_loss.append(total_loss.cpu().detach().numpy().tolist())
-#
-#         avg_loss = np.mean(avg_loss)
-#         all_rewards = torch.cat(rewards).cpu().numpy()
-#         tot_steps += opt.num_local_steps * opt.num_processes
-#         sum_reward = np.sum(all_rewards)
-#         mu_reward = np.mean(all_rewards)
-#         std_reward = np.std(all_rewards)
-#         any_flags = np.sum(flags)
-#         ep_time = time.time() - start_time
-#         # data = [tot_loops, tot_steps, ep_time, avg_loss, mu_reward, std_reward, sum_reward, any_flags]
-#         data = [tot_loops, tot_steps, "{:.6f}".format(ep_time), "{:.4f}".format(avg_loss), "{:.4f}".format(mu_reward), "{:.4f}".format(std_reward), "{:.2f}".format(sum_reward), any_flags]
-#
-#         with open(savefile, 'a', newline='') as sfile:
-#             writer = csv.writer(sfile)
-#             writer.writerows([data])
-#         print("Steps: {}. Total loss: {} Loops: {}".format(tot_steps, total_loss, tot_loops))
 
 def check_flag(info):
     out = 0
@@ -274,27 +96,22 @@ def train_fully_connected(opt, b_list, motion_list, feat_extract, train_loader, 
     else:
         torch.manual_seed(123)
     opt.saved_path = os.getcwd() + '/BBRL/' + opt.saved_path
-
     # freeze the behaviour, motion and feat_extract nets
     for param in feat_extract.parameters():
         param.requires_grad = False
     feat_extract.eval()
-
     for net in b_list:
         for param in net.parameters():
             param.requires_grad = False
         net.eval()
-
     for net in motion_list:
         for param in net.parameters():
             param.requires_grad = False
         net.eval()
-    button_list = ['a', 'b', 'l', 'r', 'u', 'd']
-
     n_batches = len(train_loader)
     params = list(fcnet.parameters())
     optimizer_fc = optim.Adam(params, lr=lr)
-    scheduler = StepLR(optimizer_fc, step_size=3, gamma=0.9)
+    scheduler = StepLR(optimizer_fc, step_size=5, gamma=0.8)
     lr_step = optimizer_fc.param_groups[0]['lr']
     training_start_time = time.time()
 
@@ -326,16 +143,7 @@ def train_fully_connected(opt, b_list, motion_list, feat_extract, train_loader, 
             motions = []
             for j in range(0, len(motion_list)):
                 motions.append(motion_list[j](features))
-
-            # behaviours = torch.empty(256, 7, dtype=torch.float32)
-            # for i in range(0, len(b_list)):
-            #     output = b_list[i](motions[i])
-            #     output = torch.flatten(output)
-            #     behaviours[:, i] = output
             behaviours = fcnet(motions[0])# using only first motion as example. hopefully should be same
-            # print(behaviours[4])
-
-            # print(motions[0].shape)
             loss = fcnet.loss_function(behaviours, controller)
             loss.backward()
             optimizer_fc.step()
@@ -375,29 +183,9 @@ def train_fully_connected(opt, b_list, motion_list, feat_extract, train_loader, 
         lr_step = optimizer_fc.param_groups[0]['lr']
         save_stats(stats_train, stats_val)  ############################################################
     print("Training finished, took {:.2f} hr".format((time.time() - training_start_time) / 3600))
+    return fcnet
 
-    # SIMPLE_MOVEMENT = [
-    #     ['noop'],
-    #     ['right'],
-    #     ['right', 'A'],
-    #     ['right', 'B'],
-    #     ['right', 'A', 'B'],
-    #     ['A', 'B'],
-    #     ['left'],
-    # ]
-    #
-    # env = create_train_env(SIMPLE_MOVEMENT, mp_wrapper=False)
-    #
-    # env.reset()
-    # state, reward, done, info = env.step(1)
-    # while True:
-    #     # i, y, u, j = env.step(np.random.randint(0,7))
-    #     i, y, u, j = env.step(5)
-    #     i, y, u, j = env.step(5)
-    #
-    #     i, y, u, j = env.step(1)
-    #     env.render()
-    #     print(y)
+
 
 
 def validation_and_plots(feat_extract, net_bx, net_motion, val_loader, device, fcnet, prefix='./plots'):
@@ -446,7 +234,6 @@ if __name__ == "__main__":
     device = torch.device("cuda" if (torch.cuda.is_available()) else "cpu")
 
     button_list = ['a', 'b', 'l', 'r', 'u', 'd']
-
     if torch.cuda.is_available():
         torch.cuda.manual_seed(123)
     else:
@@ -481,8 +268,13 @@ if __name__ == "__main__":
     fcnet = fullyconnected().to(device)
 
     print("loaded.\ntraining...")
-    train_fully_connected(opt, b_list, motion_list, feat_extract, train_loader, validation_loader, 30, 0.001, device,
-                          fcnet)
+    fcnet = train_fully_connected(opt, b_list, motion_list, feat_extract, train_loader, validation_loader, 60,
+                                  0.001, device,
+                                  fcnet)
+    # for i in range(3,10):
+    #     fcnet = train_fully_connected(opt, b_list, motion_list, feat_extract, train_loader, validation_loader, i*10, 0.001, device,
+    #                           fcnet)
+    #     torch.save(fcnet.state_dict(), './models/trial/epoc' + i)
 
 # if __name__ == "__main__":
 #     opt = get_args()

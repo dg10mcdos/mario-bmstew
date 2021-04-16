@@ -48,6 +48,16 @@
       "address": 1820,
       "type": "|u1"
     },
+    "x_pos": {
+      "address" : 109,
+      "type": "|i1"
+    },
+
+      "x_pos_2": {
+        "address": 134,
+        "type": ">u1"
+      }
+    ,
     "floatState":{
       "address": 29,
       "type": ">u1"

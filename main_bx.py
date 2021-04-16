@@ -66,6 +66,7 @@ if __name__ == "__main__":
     # ********************************
     # Train Behaviours!
     print(opt)
+
     for eachBx in opt["buttons"]:
 
         print("Training " + eachBx + "...\n")

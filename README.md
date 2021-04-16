@@ -17,7 +17,7 @@
   * `conda install -c conda-forge scikit-image scikit-plot`
   * `conda install scipy scikit-image scikit-learn pillow pandas numpy matplotlib imageio`
   * `pip3 install opencv-python`
-  * `pip3 install gym-retro==0.8.0` (If you get an error about there will be errors after 2020 while updating or installing packages, just ignore it)
+  * `pip3 install gym-retro==0.8.0` 
 
 ## Training the AutoEncoder and Behaviours (current version)
 
@@ -26,14 +26,15 @@
 3. Run `feature_extraction.py` from `behaviours` folder to train the autoencoder (inside the file, you can change the name of the dataset, line 223).
 4. After the autoencoder is trained, aka the feature extraction network, you can train the behaviours network using `mario_bx.py`. The behaviours network is defined in `behaviours/behaviour.py`. `mario_bx.py` just calls needed files and should be run from `mario-bm` or using VS Code. Remember to change the experiment file name in Line 35 in `mario_bx.py`. NOTE: At the moment, there are two experiments defined, `test.json` and `exp3.json`. In the JSON experiment file, you can define how many frames the dataset generation should skip. This trick helps the network to not overfit the data (need futher experimentation though)
 
-## For BBRL: Experiments -- Gerardo Notes
+## Mario setup
 
-* Run 3 experiments consisting of:
-  * 5 frames (exp1 in results)
-  * 4 frames (exp2 in results)
-  * 3 frames (exp3 in results)
+* Please place your NES mario ROM inside ./fceux/roms before executing the code
 
-* Seperate behaviours structure between feature extraction and action. Follow Ameya's training scheme
+## For BBRL:
+
+* In the project root folder, run ./BBRL/train.py to execute training
+* In the project root folder, run ./BBRL/test.py to test the network
+* To change the world being tested, change the first number of the string in line line 23 of ./BBRL/src/env.py 
 
 ## Extra notes
 
@@ -41,3 +42,5 @@
 * Create env from file: `conda env create -f environment.yml`
 * Activate env: `conda activate mariobm`
 * ROMS: http://nesninja.com/public/GoodNES_3.14_goodmerged/nes/
+* Please note that this code contains hardcoded paths. To run BBRL, please place the project in /Gerardo/Documents/Repos to execute the code
+

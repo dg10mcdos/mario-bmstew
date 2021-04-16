@@ -19,7 +19,6 @@ class fullyconnected(nn.Module):
     def __init__(self):
         super(fullyconnected, self).__init__()
         self.fc1 = nn.Linear(128 * 4 * 4, 128)  # (6*4*4, 1)
-
         self.fc2 = nn.Linear(128, 6)
         self.soft = nn.Softmax(dim=1)
 
@@ -39,4 +38,3 @@ class fullyconnected(nn.Module):
 
         loss = criterion(x_net, x)
         return loss
-c

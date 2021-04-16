@@ -5,7 +5,7 @@
 import pickle
 import time
 import os
-
+from torchsummary import summary
 import matplotlib
 import numpy as np
 import torch
@@ -64,7 +64,7 @@ def trainNetBx(net_motion, net_bx, feat_extract, train_loader, val_loader, n_epo
     print("epochs=", n_epochs)
     print("learning_rate=", lr)
     print("=" * 30)
-
+    # print(summary(net_motion,input_size=(384,16,16)))
     # Get training data
     n_batches = len(train_loader) # 256
     # Create our loss and optimizer functions

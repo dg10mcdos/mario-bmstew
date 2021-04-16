@@ -129,7 +129,7 @@ def train(opt): # opt is object storing args
     # Create environments
     envs = MultipleEnvironments(opt.world, opt.stage, opt.action_type, opt.num_processes)
     # Create model and optimizer
-    print("actions: ",envs.num_actions,"states: ",  envs.num_states)
+    # print("actions: ",envs.num_actions,"states: ",  envs.num_states)
     model = PPO(envs.num_states, envs.num_actions) # 4 states(assuming processes), 7 actions (buttons)
     if torch.cuda.is_available():
         model.cuda()
@@ -158,7 +158,12 @@ def train(opt): # opt is object storing args
         # if tot_loops % opt.save_interval == 0 and tot_loops > 0:
         #     # torch.save(model.state_dict(), "{}/ppo_super_mario_bros_{}_{}".format(opt.saved_path, opt.world, opt.stage))
         #     torch.save(model.state_dict(), "{}/ppo_super_mario_bros_{}_{}_{}".format(opt.saved_path, opt.world, opt.stage, tot_loops))
-
+        if tot_loops % opt.save_interval == 0 and tot_loops > 0:
+            print("Hit")
+            torch.save(model.state_dict(),
+                       "{}/ppo_super_mario_bros_{}_{}".format(opt.saved_path, opt.world, opt.stage))
+            torch.save(model.state_dict(),
+                       "{}/ppo_super_mario_bros_{}_{}_{}".format(opt.saved_path, opt.world, opt.stage, tot_loops))
         start_time = time.time()
 
         # Accumulate evidence
@@ -173,7 +178,7 @@ def train(opt): # opt is object storing args
         for _ in range(opt.num_local_steps):
             # From given states, predict an action
             states.append(curr_states)
-
+            # print(curr_states.shape)
             logits, value = model(curr_states) # actor, critic
             # print(logits.shape)
             # actor [4,7] "score" for pressing buttons aka given our state probability of each action
@@ -185,7 +190,8 @@ def train(opt): # opt is object storing args
             old_m = Categorical(policy) # actions with probabilities
             # print(old_m)
             action = old_m.sample() # choose random action wrt probabilities
-            print(action)
+            # print(action)
+            # print(old_m)
 
 
             actions.append(action) # record action
@@ -209,8 +215,9 @@ def train(opt): # opt is object storing args
                 # info - [{'levelLo': 0, 'enemyType5': 0, 'xscrollLo': 16, 'floatState': 0, 'enemyType4': 0, 'status': 8, 'levelHi': 0, 'score': 0, 'lives': 2,
                 # 'scrollamaount': 1, 'scrolling': 16, 'xscrollHi': 0, 'enemyType2': 0, 'time': 397, 'enemyType3': 0, 'coins': 0, 'gameMode': 1, 'enemyType1': 0}]
             state, reward, done, info = zip(*result)
+            # print("Before: ", state[0].shape)
             state = torch.from_numpy(np.concatenate(state, 0))
-
+            # print("After: ",state.shape)
             if torch.cuda.is_available():
                 state = state.cuda()
                 reward = torch.cuda.FloatTensor(reward)
@@ -228,7 +235,6 @@ def train(opt): # opt is object storing args
         _, next_value, = model(curr_states) # retrieve next q value
         next_value = next_value.squeeze()
         old_log_policies = torch.cat(old_log_policies).detach()
-        print(actions[0][:])
         actions = torch.cat(actions)
         values = torch.cat(values).detach() # detach?
         states = torch.cat(states)

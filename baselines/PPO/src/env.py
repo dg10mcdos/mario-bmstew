@@ -14,12 +14,13 @@ import cv2
 import numpy as np
 import subprocess as sp
 import torch.multiprocessing as mp
-from src.helpers import JoypadSpace, SIMPLE_MOVEMENT, COMPLEX_MOVEMENT, RIGHT_ONLY, flag_get
-from src.retrowrapper import RetroWrapper
+from helpers import JoypadSpace, SIMPLE_MOVEMENT, COMPLEX_MOVEMENT, RIGHT_ONLY, flag_get
+from retrowrapper import RetroWrapper
+
 
 SCRIPT_DIR = os.getcwd() #os.path.dirname(os.path.abspath(__file__))
 ENV_NAME = 'SMB-JU'
-LVL_ID = 'Level1-1'
+LVL_ID = 'Level8-1'
 
 class Monitor:
     def __init__(self, width, height, saved_path):
@@ -27,9 +28,13 @@ class Monitor:
         self.command = ["ffmpeg", "-y", "-f", "rawvideo", "-vcodec", "rawvideo", "-s", "{}X{}".format(width, height),
                         "-pix_fmt", "rgb24", "-r", "60", "-i", "-", "-an", "-vcodec", "mpeg4", saved_path]
         try:
+            print(self.command)
             self.pipe = sp.Popen(self.command, stdin=sp.PIPE, stderr=sp.PIPE)
-        except FileNotFoundError:
+        except FileNotFoundError as e:
+            print(e)
+            print("hit")
             pass
+
 
     def record(self, image_array):
         self.pipe.stdin.write(image_array.tostring())
@@ -136,7 +141,7 @@ class MultipleEnvironments:
             actions = COMPLEX_MOVEMENT
 
         # self.envs = create_train_env(actions, output_path=output_path)
-        self.envs = [create_train_env(actions, output_path=output_path) for _ in range(num_envs)]
+        self.envs = [create_train_env(actions=actions, output_path=output_path) for _ in range(num_envs)]
         
         self.num_states = self.envs[0].observation_space.shape[0]
         self.num_actions = len(actions)
